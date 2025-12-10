@@ -4,10 +4,14 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
 import androidx.compose.runtime.Composable
@@ -15,11 +19,20 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewScreenSizes
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.graphics.Color
+import kr.kimrasng.skills.study.hyungsub.data.ContentData
+import kr.kimrasng.skills.study.hyungsub.data.VideoItem
 import kr.kimrasng.skills.study.hyungsub.ui.theme.HyungSubTheme
 
 class MainActivity : ComponentActivity() {
@@ -43,11 +56,11 @@ fun HyungSubApp() {
         navigationSuiteItems = {
             AppDestinations.entries.forEach { it ->
 
-                val iconModifier = if (it.label == "") Modifier.size(32.dp) else Modifier
+                val iconModifier = if (it.label == "") Modifier.size(50.dp) else Modifier
 
                 item(
                     icon = {
-                        Icon (
+                        Icon(
                             painter = painterResource(id = it.icon),
                             contentDescription = it.label.takeIf { it.isNotEmpty() },
                             modifier = iconModifier
@@ -57,18 +70,20 @@ fun HyungSubApp() {
                     selected = it == currentDestination,
                     onClick = { currentDestination = it }
                 )
-
             }
         }
     ) {
-        Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-            Greeting(
-                name = "Android",
-                modifier = Modifier.padding(innerPadding)
-            )
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+        ) {
+            Header()
+            Finder()
+            ContentList(ContentData)
         }
     }
 }
+
 
 enum class AppDestinations(
     val label: String,
@@ -82,18 +97,175 @@ enum class AppDestinations(
 
 }
 
+var FindList = arrayOf("전체", "새로운 맞춤 동영상", "팟캐스트", "음악", "믹스", "라이브", "최근에 업로드된 영상")
+
 @Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
+fun Header() {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(WindowInsets.systemBars.asPaddingValues())
+            .padding(horizontal = 12.dp, vertical = 1.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Image(
+                painter = painterResource(id = R.drawable.youtube_logo),
+                contentDescription = "YouTube Logo"
+            )
+
+            Text(
+                "YouTube",
+                fontWeight = FontWeight.W600,
+                fontSize = 20.sp
+            )
+        }
+
+
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+
+        ) {
+
+            Icon(
+                painter = painterResource(id = R.drawable.cast),
+                contentDescription = "Cast",
+                modifier = Modifier
+                    .size(40.dp)
+                    .padding(horizontal = 6.dp)
+            )
+
+            Icon(
+                painter = painterResource(id = R.drawable.bell),
+                contentDescription = "Bell",
+                modifier = Modifier
+                    .size(40.dp)
+                    .padding(horizontal = 6.dp)
+            )
+
+            Icon(
+                painter = painterResource(id = R.drawable.search),
+                contentDescription = "Search",
+                modifier = Modifier
+                    .size(40.dp)
+                    .padding(horizontal = 6.dp)
+            )
+
+        }
+    }
 }
+
+@Composable
+fun Finder() {
+    var selectIndex by rememberSaveable { mutableStateOf(0) }
+    val isDark = isSystemInDarkTheme()
+
+    val chipColor = if (isDark)
+        Color.White.copy(alpha = 0.1f)
+    else
+        Color.Black.copy(alpha = 0.05f)
+
+    LazyRow(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 4.dp)
+            .padding(horizontal = 6.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+
+        item {
+            Box(
+                modifier = Modifier
+                    .background(
+                        chipColor,
+                        shape = RoundedCornerShape(12.dp)
+                    )
+                    .padding(6.dp)
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.finde),
+                    contentDescription = "Finder",
+                    modifier = Modifier.size(26.dp)
+                )
+            }
+        }
+
+        items(FindList.size) { index ->
+            val isSelected = selectIndex == index
+
+            Box(
+                modifier = Modifier
+                    .background(
+                        if (isSelected) Color.White else chipColor,
+                        shape = RoundedCornerShape(10.dp)
+                    )
+                    .clickable { selectIndex = index }
+                    .padding(horizontal = 14.dp, vertical = 8.dp)
+            ) {
+                Text(
+                    text = FindList[index],
+                    color = if (isSelected) Color.Black else MaterialTheme.colorScheme.onSurface,
+                    fontSize = 14.sp,
+                )
+            }
+        }
+    }
+}
+
+
+
+@Composable
+fun ContentList(videos: List<VideoItem>) {
+    LazyColumn {
+        items(videos.size) { index ->
+            Content(video = videos[index])
+        }
+    }
+}
+
+@Composable
+fun Content(video: VideoItem) {
+    Column {
+        Box {
+            Image(
+                painter = painterResource(id = video.thumbnail),
+                contentDescription = null,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(16f / 9f)
+            )
+            }
+        }
+
+        Row(
+            modifier = Modifier.padding(8.dp),
+            verticalAlignment = Alignment.Top
+        ) {
+            Image(
+                painter = painterResource(id = video.channelProfile),
+                contentDescription = null,
+                modifier = Modifier
+                    .size(40.dp)
+                    .padding(end = 8.dp)
+            )
+            Column {
+                Text(video.title, fontWeight = FontWeight.Bold)
+                Text("${video.channelName} · ${video.viewCount} · ${video.uploadTime}",
+                    color = Color.Gray, fontSize = 12.sp)
+            }
+        }
+    }
+
+
 
 @Preview(showBackground = true)
 @Composable
 fun GreetingPreview() {
     HyungSubTheme {
-        Greeting("Android")
     }
 }
